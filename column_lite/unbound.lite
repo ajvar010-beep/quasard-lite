@@ -1,0 +1,29 @@
+server:
+	msg-cache-size: 2m
+	rrset-cache-size: 2m
+	username: "nobody"
+	# LITE-режим (без ПК): домены Алисы пинованы на САМУ колонку — там живёт
+	# quasard-lite (127.0.0.1:80/443), он отдаёт музыку/радио/книги локально.
+	# oauth/login/mobileproxy здесь НАМЕРЕННО отсутствуют (pins 18.11 убраны):
+	# колонка должна иметь возможность обновить токен у настоящего Яндекса,
+	# иначе после его истечения голос умрёт навсегда. У lite нет /token —
+	# пин на себя вернёт только {"status":"ok"} без токена.
+	local-data: "quasar.yandex.net A 127.0.0.1"
+	local-data: "quasar.yandex.ru A 127.0.0.1"
+	local-data: "startup.mobile.yandex.net A 127.0.0.1"
+	local-data: "report.appmetrica.yandex.net A 127.0.0.1"
+	local-data: "clck.yandex.net A 127.0.0.1"
+	local-data: "uniproxy.alice.yandex.net A 127.0.0.1"
+	local-data: "uniproxy-quic.alice.yandex.net A 127.0.0.1"
+	local-data: "push.yandex.ru A 127.0.0.1"
+	local-data: "scbh.yandex.net A 127.0.0.1"
+	local-data: "rpc.alice.yandex.net A 127.0.0.1"
+	local-data: "analytics.mobile.yandex.net A 127.0.0.1"
+	local-data: "updater.mobile.yandex.net A 127.0.0.1"
+forward-zone:
+	name: "."
+	# только .8/.1: egress-файрвол пускает DNS на эти два адреса до DROP
+	# 77.88.0.0/18; запросы к .88/.2 молча умирали (проверено 18.11:
+	# nslookup через 77.88.8.88 = «Operation not permitted»).
+	forward-addr: "77.88.8.1"
+	forward-addr: "77.88.8.8"

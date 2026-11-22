@@ -1,0 +1,49 @@
+# окружения и кэш
+.venv/
+__pycache__/
+tts_bench/
+
+# личное: ключи, токены, конфиг, промпт, голос, данные станций, сертификаты, логи трафика
+config.toml
+groq_key.txt
+system_prompt.txt*
+system_prompt_deep.txt*
+data/
+voice/
+certs/
+models/
+logs/
+*.har
+*.log
+*.wav
+*.ogg
+*.mp3
+*.mp4
+COMMIT_MSG.txt
+# скрипты запуска с ключами API (создавались вручную, в репозиторий не идут)
+restart_alice.bat
+
+# личный системный промпт глубокого поиска (второй файл Dialog)
+system_prompt_deep.txt
+
+# рантайм-артефакты
+*.pid
+*.pyc
+
+# отладочные дампы (не код)
+cpu_bench.txt
+gigaam_test*.txt
+tool_test.txt
+
+# «Олег»: собранное и журналы экспериментов (исходники — oleg/station, oleg/tools)
+oleg/build/
+
+# tools_silero: коммитим только шим и тесты, всё остальное — дампы прошивки,
+# снапшоты и одноразовые скрипты (_*.py), это сотни мегабайт
+tools_silero/_*
+tools_silero/_fw*
+tools_silero/_ref/
+tools_silero/_snap/
+tools_silero/_devlogs/
+tools_silero/*.log
+tools_silero/*.txt

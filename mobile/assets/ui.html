@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Пульт колонки</title>
+<style>
+  :root { --bg:#101418; --card:#1a2129; --accent:#4fc3f7; --ok:#66bb6a; --bad:#ef5350; --text:#e8eef4; --dim:#8a9aa9; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: sans-serif; font-size:16px; }
+  header { padding:14px 16px 8px; display:flex; align-items:center; justify-content:space-between; }
+  header h1 { font-size:19px; margin:0; font-weight:600; }
+  #dot { width:12px; height:12px; border-radius:50%; background:var(--dim); }
+  #dot.ok { background:var(--ok); } #dot.bad { background:var(--bad); }
+  nav { display:flex; gap:6px; padding:0 12px 10px; }
+  nav button { flex:1; padding:10px 4px; border:0; border-radius:10px; background:var(--card); color:var(--dim); font-size:14px; }
+  nav button.on { background:var(--accent); color:#04202b; font-weight:600; }
+  main { padding:4px 12px 20px; }
+  .tab { display:none; } .tab.on { display:block; }
+  .card { background:var(--card); border-radius:12px; padding:14px; margin-bottom:10px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row + .row { margin-top:8px; }
+  .grow { flex:1; }
+  .dim { color:var(--dim); font-size:14px; }
+  input[type=text], input[type=password] { width:100%; padding:11px; border-radius:10px; border:1px solid #2c3743; background:#0d1116; color:var(--text); font-size:16px; }
+  button.btn { padding:11px 14px; border:0; border-radius:10px; background:#26313d; color:var(--text); font-size:15px; }
+  button.primary { background:var(--accent); color:#04202b; font-weight:600; }
+  button.wide { width:100%; }
+  .net { padding:12px 4px; border-bottom:1px solid #232c36; display:flex; align-items:center; gap:10px; }
+  .net:last-child { border-bottom:0; }
+  .net .name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .net .sig { color:var(--dim); font-size:13px; }
+  .hist { padding:10px 2px; border-bottom:1px solid #232c36; font-size:15px; }
+  .hist time { color:var(--dim); font-size:12px; display:block; }
+  .msg { margin-top:8px; font-size:14px; }
+  .msg.ok { color:var(--ok); } .msg.bad { color:var(--bad); }
+  .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; }
+  .grid button { padding:14px 6px; font-size:14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Пульт колонки</h1>
+  <div id="dot" title="связь"></div>
+</header>
+<nav>
+  <button data-t="wifi" class="on">Wi-Fi</button>
+  <button data-t="rc">Пульт</button>
+  <button data-t="bt">BT</button>
+  <button data-t="hist">Ист.</button>
+  <button data-t="cfg">Настр.</button>
+</nav>
+<main>
+
+<section class="tab on" id="tab-wifi">
+  <div class="card">
+    <div class="dim">Сейчас</div>
+    <div class="row" style="margin-top:6px">
+      <div class="grow"><b id="cur-ssid">—</b><div class="dim" id="cur-ip"></div></div>
+      <button class="btn" onclick="loadStatus()">Обновить</button>
+    </div>
+  </div>
+  <div class="card">
+    <button class="btn primary wide" onclick="scanWifi()">Сканировать сети</button>
+    <div class="msg" id="wifi-msg"></div>
+    <div id="nets"></div>
+  </div>
+</section>
+
+<section class="tab" id="tab-rc">
+  <div class="card">
+    <div class="row">
+      <div class="grow">Блютуз: <b id="bt-state">—</b></div>
+      <button class="btn" id="bt-btn" onclick="toggleBt()">Вкл</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row">
+      <input type="text" id="say-text" placeholder="Команда: включи радио маяк…">
+      <button class="btn primary" onclick="sendSay()">▶</button>
+    </div>
+    <div class="msg" id="say-msg"></div>
+    <div class="grid">
+      <button class="btn" onclick="quick('пауза')">Пауза</button>
+      <button class="btn" onclick="quick('продолжай')">Продолжай</button>
+      <button class="btn" onclick="quick('дальше')">Дальше</button>
+      <button class="btn" onclick="quick('громче')">Громче</button>
+      <button class="btn" onclick="quick('тише')">Тише</button>
+      <button class="btn" onclick="quick('стоп')">Стоп</button>
+    </div>
+    <div class="dim" style="margin-top:14px">Свет</div>
+    <div class="grid">
+      <button class="btn" onclick="quick('посвети красным')">Красный</button>
+      <button class="btn" onclick="quick('посвети зелёным')">Зелёный</button>
+      <button class="btn" onclick="quick('посвети синим')">Синий</button>
+      <button class="btn" onclick="quick('посвети')">Голубой</button>
+      <button class="btn" onclick="quick('посвети фиолетовым')">Фиолетовый</button>
+      <button class="btn" onclick="quick('выключи свет')">Выключить</button>
+    </div>
+    <div class="dim" style="margin-top:14px">Ещё</div>
+    <div class="grid">
+      <button class="btn" onclick="quick('включи радио маяк')">Маяк</button>
+      <button class="btn" onclick="quick('какая погода')">Погода</button>
+      <button class="btn" onclick="quick('какой курс валют')">Курс</button>
+    </div>
+  </div>
+</section>
+
+<section class="tab" id="tab-hist">
+  <div class="card">
+    <div class="row">
+      <div class="grow dim">Последние команды колонки</div>
+      <button class="btn" onclick="loadHistory()">Обновить</button>
+    </div>
+    <div id="hist-list" style="margin-top:6px"></div>
+  </div>
+</section>
+
+<section class="tab" id="tab-bt">
+  <div class="card">
+    <div class="dim">Настройка чужого Wi-Fi по Bluetooth: колонке не нужен интернет,
+      чтобы попасть в новую сеть. Телефон должен быть сопряжён с колонкой
+      (в настройках Bluetooth Android).</div>
+    <button class="btn primary wide" style="margin-top:10px" onclick="loadBt()">Показать сопряжённые устройства</button>
+    <div class="msg" id="bt-msg"></div>
+    <div id="bt-devices"></div>
+  </div>
+  <div class="card">
+    <div class="dim">Сеть, к которой подключить колонку</div>
+    <input type="text" id="bt-ssid" placeholder="Имя сети (SSID)" style="margin-top:6px">
+    <input type="password" id="bt-pass" placeholder="Пароль Wi-Fi" style="margin-top:8px">
+    <button class="btn primary wide" style="margin-top:12px" onclick="provisionBt()">Передать колонке</button>
+    <div class="msg" id="bt-out"></div>
+  </div>
+</section>
+
+<section class="tab" id="tab-cfg">
+  <div class="card">
+    <div class="dim">Адрес колонки (IP в вашем Wi-Fi)</div>
+    <input type="text" id="ip" placeholder="192.168.0.100" style="margin-top:6px">
+    <div class="dim" style="margin-top:12px">Токен доступа</div>
+    <input type="password" id="token" placeholder="токен из файла mgmt_token" style="margin-top:6px">
+    <button class="btn primary wide" style="margin-top:14px" onclick="saveCfg()">Сохранить</button>
+    <div class="msg" id="cfg-msg"></div>
+    <p class="dim" style="margin-top:14px">
+      Токен — файл /data/opt/column_lite/mgmt_token на колонке.
+      Он нужен, чтобы чужие устройства в сети не могли менять Wi-Fi.
+    </p>
+  </div>
+</section>
+
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let cfg = { ip: "", token: "" };
+
+function api(method, path, body) {
+  try {
+    const raw = Android.api(method, path, body ? JSON.stringify(body) : "");
+    return JSON.parse(raw || "{}");
+  } catch (e) { return { error: String(e) }; }
+}
+function paint() {
+  const d = $("dot"); d.className = "";
+  setTimeout(() => apiLater(), 30);
+}
+function apiLater() {
+  const r = api("GET", "/_mgmt/status");
+  $("dot").className = r && !r.error ? "ok" : "bad";
+  if (r && r.bluetooth !== undefined) {
+    $("bt-state").textContent = r.bluetooth ? "включён" : "выключен";
+    $("bt-btn").textContent = r.bluetooth ? "Выкл" : "Вкл";
+  }
+  if (r && r.wifi) {
+    $("cur-ssid").textContent = r.wifi.ssid || "не подключена";
+    $("cur-ip").textContent = r.wifi.ip || "";
+  }
+}
+function loadStatus() {
+  $("wifi-msg").textContent = "";
+  setTimeout(apiLater, 30);
+}
+function scanWifi() {
+  $("wifi-msg").className = "msg"; $("wifi-msg").textContent = "Сканирую сети…";
+  setTimeout(() => {
+    const r = api("GET", "/_mgmt/wifi/scan");
+    const box = $("nets"); box.innerHTML = "";
+    if (r.error || !r.networks) {
+      $("wifi-msg").className = "msg bad";
+      $("wifi-msg").textContent = "Ошибка: " + (r.error || "нет списка");
+      return;
+    }
+    $("wifi-msg").textContent = "Нажмите на сеть, чтобы подключиться";
+    r.networks.forEach(n => {
+      const div = document.createElement("div");
+      div.className = "net";
+      div.innerHTML = '<span class="name">' + esc(n.ssid) + '</span>' +
+        '<span class="sig">' + n.signal + ' dB</span>' +
+        '<button class="btn">' + (n.secure ? "🔒" : "") + ' Подкл.</button>';
+      div.querySelector("button").onclick = () => connectWifi(n.ssid, n.secure);
+      box.appendChild(div);
+    });
+  }, 50);
+}
+function connectWifi(ssid, secure) {
+  let pass = "";
+  if (secure) {
+    pass = prompt("Пароль Wi-Fi для «" + ssid + "»", "");
+    if (pass === null) return;
+  }
+  $("wifi-msg").className = "msg"; $("wifi-msg").textContent = "Подключаюсь…";
+  setTimeout(() => {
+    const r = api("POST", "/_mgmt/wifi/connect", { ssid: ssid, password: pass });
+    $("wifi-msg").className = "msg " + (r.ok ? "ok" : "bad");
+    $("wifi-msg").textContent = (r.ok ? "✓ " : "✗ ") + (r.message || "");
+    if (r.ok) setTimeout(apiLater, 2500);
+  }, 50);
+}
+function loadHistory() {
+  setTimeout(() => {
+    const r = api("GET", "/_mgmt/history");
+    const box = $("hist-list"); box.innerHTML = "";
+    if (r.error || !r.items) {
+      box.innerHTML = '<div class="msg bad">Ошибка: ' + esc(r.error || "") + '</div>';
+      return;
+    }
+    r.items.forEach(it => {
+      const d = document.createElement("div");
+      d.className = "hist";
+      const t = new Date(it.ts * 1000);
+      d.innerHTML = '<time>' + t.toLocaleDateString() + ' ' +
+        t.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) +
+        '</time>' + esc(it.text);
+      box.appendChild(d);
+    });
+    if (!r.items.length) box.innerHTML = '<div class="dim">пусто</div>';
+  }, 50);
+}
+function toggleBt() {
+  setTimeout(() => {
+    const cur = $("bt-state").textContent === "включён";
+    const r = api("POST", "/_mgmt/bt", { on: !cur });
+    if (!r.ok && r.error) alert("Блютуз: " + (r.error || (r.output || "")));
+    apiLater();
+  }, 50);
+}
+function sendSay() {
+  const text = $("say-text").value.trim();
+  if (!text) return;
+  $("say-msg").className = "msg"; $("say-msg").textContent = "Отправляю…";
+  setTimeout(() => {
+    const r = api("POST", "/_mgmt/say", { text: text });
+    $("say-msg").className = "msg " + (r.ok ? "ok" : "bad");
+    $("say-msg").textContent = r.ok ? "✓ отправлено" : "✗ " + (r.error || "не ушло");
+    if (r.ok) $("say-text").value = "";
+  }, 50);
+}
+function quick(text) { $("say-text").value = text; sendSay(); }
+let btMac = "";
+function loadBt() {
+  $("bt-msg").className = "msg"; $("bt-msg").textContent = "Ищу сопряжённые устройства…";
+  setTimeout(() => {
+    let r;
+    try { r = JSON.parse(Android.btDevices() || "{}"); } catch (e) { r = {error: String(e)}; }
+    const box = $("bt-devices"); box.innerHTML = "";
+    if (r.error) {
+      $("bt-msg").className = "msg bad"; $("bt-msg").textContent = r.error;
+      return;
+    }
+    const ds = r.devices || [];
+    if (!ds.length) {
+      $("bt-msg").textContent = "Сопряжённых устройств нет — сопрягите телефон с колонкой в настройках Android";
+      return;
+    }
+    $("bt-msg").textContent = "Выберите колонку в списке";
+    ds.forEach(d => {
+      const div = document.createElement("div");
+      div.className = "net";
+      div.innerHTML = '<span class="name">' + esc(d.name || d.mac) + '</span>' +
+        '<button class="btn">Выбрать</button>';
+      div.querySelector("button").onclick = () => {
+        btMac = d.mac;
+        $("bt-msg").className = "msg ok";
+        $("bt-msg").textContent = "Выбрано: " + (d.name || d.mac);
+      };
+      box.appendChild(div);
+    });
+  }, 50);
+}
+function provisionBt() {
+  if (!btMac) {
+    $("bt-out").className = "msg bad";
+    $("bt-out").textContent = "Сначала выберите устройство выше";
+    return;
+  }
+  const ssid = $("bt-ssid").value.trim();
+  const pass = $("bt-pass").value;
+  if (!ssid) {
+    $("bt-out").className = "msg bad";
+    $("bt-out").textContent = "Введите имя сети";
+    return;
+  }
+  $("bt-out").className = "msg";
+  $("bt-out").textContent = "Передаю по Bluetooth… (до 45 секунд)";
+  setTimeout(() => {
+    let r;
+    try { r = JSON.parse(Android.btProvision(btMac, ssid, pass) || "{}"); }
+    catch (e) { r = {error: String(e)}; }
+    if (r.error) {
+      $("bt-out").className = "msg bad";
+      $("bt-out").textContent = "✗ " + r.error;
+      return;
+    }
+    if (r.ok) {
+      let msg = "✓ Колонка подключилась";
+      if (r.ip) {
+        msg += " — адрес " + r.ip + " (сохранён в настройках)";
+        Android.save(r.ip, $("token").value.trim());
+        $("ip").value = r.ip;
+      }
+      $("bt-out").className = "msg ok";
+      $("bt-out").textContent = msg;
+      setTimeout(apiLater, 3000);
+    } else {
+      $("bt-out").className = "msg bad";
+      $("bt-out").textContent = "✗ " + (r.message || "колонка не подключилась");
+    }
+  }, 50);
+}
+function saveCfg() {
+  cfg = { ip: $("ip").value.trim(), token: $("token").value.trim() };
+  Android.save(cfg.ip, cfg.token);
+  $("cfg-msg").className = "msg ok"; $("cfg-msg").textContent = "Сохранено";
+  setTimeout(apiLater, 200);
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+document.querySelectorAll("nav button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("nav button").forEach(x => x.classList.remove("on"));
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    $("tab-" + b.dataset.t).classList.add("on");
+    if (b.dataset.t === "hist") loadHistory();
+    if (b.dataset.t === "rc") apiLater();
+  };
+});
+(function start() {
+  try {
+    const s = JSON.parse(Android.settings() || "{}");
+    cfg = s;
+    $("ip").value = s.ip || "";
+    $("token").value = s.token || "";
+  } catch (e) {}
+  if (!cfg.ip || !cfg.token) {
+    document.querySelector('nav button[data-t="cfg"]').click();
+    return;
+  }
+  apiLater();
+})();
+</script>
+</body>
+</html>

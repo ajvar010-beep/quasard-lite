@@ -1,0 +1,43 @@
+#!/bin/sh
+# quasard-lite: автозапуск автономного ядра на колонке.
+# Стартует ПОСЛЕ S99zoleg (профиль Олег) и S99quasar (штатная Алиса).
+# Если quasard-lite не поднялся — колонка остаётся на штатной Алисе.
+LITE_DIR=/data/opt/column_lite
+PIDFILE=/tmp/quasard-lite.pid
+LOG=/tmp/lite.log
+
+stop_lite() {
+  if [ -f "$PIDFILE" ]; then
+    kill "$(cat "$PIDFILE")" 2>/dev/null
+    rm -f "$PIDFILE"
+  fi
+  # добиваем осиротевшие процессы (после ребута pid-файл мог не сохраниться).
+  # P1-5: раньше убивали ВСЕ python3.12 — при рестарте lite падала штатная Алиса.
+  for p in $(ps 2>/dev/null | grep 'column_lite\.main' | grep -v grep | awk '{print $1}'); do
+    kill "$p" 2>/dev/null
+  done
+}
+
+case "$1" in
+  start)
+    [ -x /data/opt/python/bin/python3.12 ] || { echo "нет python3.12"; exit 0; }
+    [ -d "$LITE_DIR" ] || { echo "нет $LITE_DIR"; exit 0; }
+    stop_lite
+    export PYTHONHOME=/data/opt/python
+    export PYTHONPATH=/data/opt/pylibs:/data/opt
+    export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+    export LITE_DIR="$LITE_DIR"
+    start-stop-daemon -S -b -m -p "$PIDFILE" -x /bin/sh -- -c \
+      "cd /data/opt && exec /data/opt/python/bin/python3.12 -u -m column_lite.main >> $LOG 2>&1"
+    echo "quasard-lite started"
+    ;;
+  stop)
+    stop_lite
+    echo "quasard-lite stopped"
+    ;;
+  restart)
+    stop_lite
+    sleep 1
+    "$0" start
+    ;;
+esac

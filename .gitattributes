@@ -1,0 +1,6 @@
+# Скрипты, которые едут на колонку (Linux), — только LF, даже на Windows с
+# core.autocrlf=true. С CRLF шебанг превращается в "#!/bin/sh\r", и скрипт
+# на колонке не запускается (автозапуск «Олега» и сторожа молча ломается).
+*.sh text eol=lf
+S9[0-9]* text eol=lf
+column_lite/unbound.lite text eol=lf

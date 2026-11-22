@@ -1,0 +1,8 @@
+# Сборка APK: в репозитории только исходники.
+# Готовый QuasardRemote.apk лежит рядом на диске (и в релизе), но не в git.
+*.apk
+*.jar
+*.keystore
+classes/
+dex/
+build/
